@@ -1,28 +1,32 @@
 <?php
 
-use function Livewire\Volt\{state, rules};
+use function Livewire\Volt\{state, mount, rules};
 use App\Models\Memo;
 
-state(['title', 'body']);
-
-//バリデーションルールの定義
+//フォームの状態を管理
+state(['memo', 'title', 'body']);
+//ルートモデルバインディングはmountでまとめて行う
+mount(function (Memo $memo) {
+    $this->memo = $memo;
+    $this->title = $memo->title;
+    $this->body = $memo->body;
+});
+//バリデーションルールを定義
 rules([
     'title' => 'required|string|max:50',
     'body' => 'required|string|max:2000',
 ]);
-//メモを保存する関数
-$store = function () {
+$update = function () {
     $this->validate(); //バリデーションチェック
-    //フォームからの入力値をデータベースへ保存title,bodyなど項目ごとに設定しなくて良くなる。
-    Memo::create($this->all());
-    //一覧ベージにリダイレクト
-    return redirect()->route('memos.index');
+    $this->memo->update($this->all());
+    return redirect()->route('memos.show', $this->memo);
 };
 ?>
+
 <div>
-    <a href="{{ route('memos.index') }}">戻る</a>
-    <h1>新規登録</h1>
-    <form wire:submit="store">
+    <a href="{{ route('memos.show', $memo) }}">戻る</a>
+    <h1>更新</h1>
+    <form wire:submit="update">
         <p>
             <label for="title">タイトル</label>
             @error('title')
@@ -40,6 +44,6 @@ $store = function () {
             <textarea wire:model="body" id="body"></textarea>
         </p>
 
-        <button type="submit">登録</button>
+        <button type="submit">更新</button>
     </form>
 </div>
